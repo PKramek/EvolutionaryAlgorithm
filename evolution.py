@@ -1,8 +1,8 @@
-import random
+import math
 from typing import Callable, List, Tuple
 
 import matplotlib.pyplot as plt
-from numpy import random as np_random
+from numpy import random
 
 
 class Evolution:
@@ -35,6 +35,9 @@ class Evolution:
 
         # TODO add crossing_probability checking
         # TODO add sigma checking
+
+        if crossing_probability < 0 or crossing_probability > 1:
+            raise ValueError('Probability of crossing must be in range [0, 1]')
 
         selection_methods = {self.TOURNAMENT_SELECTION: self.tournament_selection}
         crossing_methods = {self.NO_CROSSING: self.no_crossing}
@@ -78,6 +81,7 @@ class Evolution:
         self.population_scores = self.score(self.population)
 
         while not self._is_done(stop_parameter, t, max_iterations, max_quality_function_calls):
+
             temporal_population = self.select(self.population, self.population_scores)
             temporal_population = self.mutate(temporal_population)
             temporal_population = self.cross(temporal_population, self.crossing_probability)
@@ -90,7 +94,10 @@ class Evolution:
             )
 
             self.mean_scores.append(sum(self.population_scores) / self.population_size)
-            self.best_scores.append(max(self.population_scores))
+            if self.minimize:
+                self.best_scores.append(min(self.population_scores))
+            else:
+                self.best_scores.append(max(self.population_scores))
 
             t += 1
 
@@ -133,7 +140,7 @@ class Evolution:
         selected_candidates = []
 
         for i in range(self.population_size):
-            contenders_indexes = random.choices(range(self.population_size), k=2)
+            contenders_indexes = random.choice(range(self.population_size), size=2, replace=True)
 
             first_score = scores[contenders_indexes[0]]
             second_score = scores[contenders_indexes[1]]
@@ -161,14 +168,12 @@ class Evolution:
             -> Tuple[List[List[float]], List[float]]:
         return temporal_population, termporal_population_scores
 
-    def mutate(self, population: List[List[float]]) -> List[float]:
+    def mutate(self, population: List[List[float]]) -> List[List[float]]:
         mutated_population = []
         for candidate in population:
-            modification_arr = np_random.normal(loc=0, scale=self.sigma, size=self.num_of_parameters)
-
-            lower_than_zero = len([x for x in modification_arr if x < 0])
-
+            modification_arr = random.normal(loc=0, scale=self.sigma, size=self.num_of_parameters)
             mutated_candidate = [value + modifier for value, modifier in zip(candidate, modification_arr)]
+
             mutated_population.append(mutated_candidate)
 
         mutated_population = self.assert_parameters_are_bound(mutated_population)
@@ -195,15 +200,30 @@ class Evolution:
             print('Score: {:.3f}, candidate {}'.format(extended_population[i][1], extended_population[i][0]))
 
 
-def quality_function(parameters: List[float]):
-    return sum([x ** 2 for x in parameters])
+def ackley_quality_function(parameters: List[float]):
+    n = len(parameters)
+
+    sum_of_squares = sum([x ** 2 for x in parameters])
+    sqrt_of_mean_of_squares = math.sqrt(sum_of_squares / n)
+    sum_of_cosines = sum([math.cos(2 * math.pi * x) for x in parameters])
+
+    return (-20 * math.exp(-0.2 * sqrt_of_mean_of_squares)) - math.exp(sum_of_cosines / n) + 20 + math.e
 
 
 if __name__ == '__main__':
-    parameter_bounds = [(-10, 10), (-10, 10), (-10, 10), (-10, 10), (-10, 10),
-                        (-10, 10), (-10, 10), (-10, 10), (-10, 10), (-10, 10)]
+    random.seed(42)
 
-    evolution = Evolution(20, 0.5, quality_function, 10, parameter_bounds, 1,
+    ackley_parameter_bounds = [(-32, 32)] * 10
+
+    number_of_experiment_repetitions = 25
+
+    small_population_size = 20
+    big_population_size = 100
+
+    big_population_last_iterations_populations = []
+    small_population_last_iterations_populations = []
+
+    evolution = Evolution(20, 0.25, ackley_quality_function, 10, ackley_parameter_bounds, 1,
                           minimize=True,
                           type_of_selection=Evolution.TOURNAMENT_SELECTION,
                           type_of_crossing=Evolution.NO_CROSSING,
@@ -213,5 +233,6 @@ if __name__ == '__main__':
 
     plt.plot(evolution.mean_scores)
     plt.plot(evolution.best_scores)
+
     plt.ylabel('Mean And Max Values')
     plt.show()
