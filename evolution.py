@@ -5,27 +5,35 @@ from numpy import random as np_random
 
 
 class Evolution:
+    # Selection types
     TOURNAMENT_SELECTION = 'Tournament selection'
 
+    # Crossing types
     NO_CROSSING = 'No crossing'
 
-    GENERATION_SUCCESION = 'Generation succesion'
+    # Succesion types
+    GENERATION_SUCCESSION = 'Generation succesion'
 
     def __init__(self, population_size: int, sigma: float, quality_function: Callable, num_of_parameters: int,
-                 type_of_selection: str, type_of_crossing: str, type_of_succesion: str, crossing_probability: float):
+                 type_of_selection: str, type_of_crossing: str, type_of_succession: str, crossing_probability: float):
         selection_methods = {self.TOURNAMENT_SELECTION: self.tournament_selection}
         crossing_methods = {self.NO_CROSSING: self.no_crossing}
-        succesion_methods = {self.GENERATION_SUCCESION: self.generation_succesion}
+        succession_methods = {self.GENERATION_SUCCESSION: self.generation_succesion}
+
+        self.population = []
 
         self.population_size = population_size
         self.sigma = sigma
         self.quality_function = quality_function
         self.num_of_parameters = num_of_parameters
-        self.crossing_probability = self.crossing_probability
+        self.crossing_probability = crossing_probability
 
         self.selection = selection_methods[type_of_selection]
         self.crossing = crossing_methods[type_of_crossing]
-        self.succesion = succesion_methods[type_of_succesion]
+        self.succession = succession_methods[type_of_succession]
+
+    def evolve(self):
+
 
     def tournament_selection(self, population: List[List[float]]) -> List[List[float]]:
         selected_candidates = []
