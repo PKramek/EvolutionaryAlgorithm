@@ -202,7 +202,8 @@ class Evolution:
 
             t += 1
 
-    def _is_done(self, stop_parameter: str, iterations: int, max_iterations: int, max_quality_function_calls: int):
+    def _is_done(self, stop_parameter: str, iterations: int, max_iterations: int,
+                 max_quality_function_calls: int) -> bool:
         """
         Helper function for deciding if evolution process should terminate.
 
@@ -213,10 +214,10 @@ class Evolution:
         :type iterations:  int
         :param max_iterations: Maximum number of iterations of evolution process
         :type max_iterations: int
-        :param max_quality_function_calls: Maximum number of
-        :type max_quality_function_calls:
-        :return:
-        :rtype:
+        :param max_quality_function_calls: Maximum number of quality function calls
+        :type max_quality_function_calls: int
+        :return: Information if evolution process should be terminated
+        :rtype: bool
         """
         is_done = False
 
