@@ -6,23 +6,32 @@ from numpy import random
 
 
 class Evolution:
-    # This constants are used to create one clear way of parametrizing objects of this class
+    # TODO extract Selection, crossing and succession classes for strategy pattern
+
+    # This constants are used to create one clear way of parametrizing objects of this class. When needed new methods
+    # and corresponding constants should be created.
 
     # Evolution stop method
     MAX_ITERATIONS = 'iterations'
     MAX_QUALITY_FUNCTION_CALLS = 'quality calls'
 
     # Selection methods
+    # All selection methods should have the same parameter list:
+    # (self, population: List[List[float]], scores: List[float])
     TOURNAMENT_SELECTION = 'Tournament selection'
 
     # Crossing methods
+    # All crossing methods should have the same parameter list:
+    # (self, population: List[List[float]], crossing_probability: float)
     NO_CROSSING = 'No crossing'
 
     # Succession methods
+    # (self, population: List[List[float]], temporal_population: List[List[float]],
+    # population_scores: List[float], temporal_population_scores: List[float])
     GENERATION_SUCCESSION = 'Generation succession'
 
     def __init__(self, population_size: int, sigma: float,
-                 quality_function: Callable, num_of_parameters: int,
+                 quality_function: Callable, dimensionality: int,
                  parameter_bounds: List[Tuple[float, float]],
                  crossing_probability: float,
                  minimize: bool = True,
@@ -31,7 +40,35 @@ class Evolution:
                  type_of_crossing: str,
                  type_of_succession: str,
                  ):
-
+        """
+        :param population_size: Defines population size to be used in evolution process
+        :type population_size: int
+        :param sigma: Defines standard deviation of distribution used in mutation process
+        :type sigma: float
+        :param quality_function: Function used to define quality of single candidate. This function should return float
+        :type quality_function: Callable
+        :param dimensionality: Defines number of dimensions of each candidate
+        :type dimensionality: int
+        :param parameter_bounds: Defines low and high bounds of each of the parameters. Bounds should be floats
+        :type parameter_bounds: List[Tuple[float, float]]
+        :param crossing_probability: Probability of crossing single candidate with any other candidate
+        :type crossing_probability: float
+        :param minimize: Parameter defining if algorithm should minimize of maximize value of quality function.
+                         If True is given then algorithm will minimize output of quality function.
+        :type minimize: bool
+        :param type_of_selection: Parameter deciding what form of selection is used in algorithm.
+                                 Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
+                                 that should be passed as value of this parameter.
+        :type type_of_selection: str
+        :param type_of_crossing: Parameter deciding what form of crossing is used in algorithm.
+                                Inside class there are constants defined in form <NAME OF CROSSING TYPE>_CROSSING,
+                                that should be passed as value of this parameter.
+        :type type_of_crossing: str
+        :param type_of_succession: Parameter deciding what form of succession is used in algorithm.
+                                  Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
+                                  that should be passed as value of this parameter.
+        :type type_of_succession: str
+        """
         if crossing_probability < 0 or crossing_probability > 1:
             raise ValueError('Probability of crossing must be in range [0, 1]')
 
@@ -45,13 +82,22 @@ class Evolution:
         self.population_size = population_size
         self.sigma = sigma
         self.quality_function = quality_function
-        self.num_of_parameters = num_of_parameters
+        self.num_of_parameters = dimensionality
         self.parameter_bounds = parameter_bounds
         self.crossing_probability = crossing_probability
 
-        self.select: Callable = selection_methods[type_of_selection]
-        self.cross: Callable = crossing_methods[type_of_crossing]
-        self.apply_succession: Callable = succession_methods[type_of_succession]
+        self.select: Callable = selection_methods.get(type_of_selection)
+        self.cross: Callable = crossing_methods.get(type_of_crossing)
+        self.apply_succession: Callable = succession_methods.get(type_of_succession)
+
+        if self.select is None:
+            raise ValueError('Selection method not found')
+
+        if self.cross is None:
+            raise ValueError('Crossing method not found')
+
+        if self.apply_succession is None:
+            raise ValueError('Succession method not found')
 
         self.quality_function_calls = 0
 
@@ -65,14 +111,30 @@ class Evolution:
         self.mean_scores = []
 
     def evolve(self, stop_parameter: str, *, max_iterations: int = None, max_quality_function_calls: int = None):
+        """
+        Main method of this class, it performs evolution algorithm.
+
+        :param stop_parameter: This parameter defines when does evolution process end. There are two possible values of
+        this parameter defined in static constants - MAX_ITERATIONS and MAX_QUALITY_FUNCTION_CALLS.
+        :type stop_parameter: str
+        :param max_iterations: Defines maximum number of iterations in evolution algorithm. If stop_parameter is set to
+        MAX_ITERATIONS this parameter must be passed.
+        :type max_iterations: int
+        :param max_quality_function_calls: Defines maximum number of calls of quality function in evolution algorithm.
+        If stop_parameter is set to MAX_QUALITY_FUNCTION_CALLS this parameter must be passed.
+        :type max_quality_function_calls: int
+        """
+        if stop_parameter not in [self.MAX_ITERATIONS, self.MAX_QUALITY_FUNCTION_CALLS]:
+            raise ValueError('Stop parameter not found')
+
         if stop_parameter == self.MAX_ITERATIONS:
             if max_iterations is None or not isinstance(max_iterations, int) or max_iterations < 0:
-                raise ValueError('max_iterations must be an integer bigger than 0')
+                raise ValueError('Max_iterations must be an integer bigger than 0')
 
         elif stop_parameter == self.MAX_QUALITY_FUNCTION_CALLS:
             if max_quality_function_calls is None or not isinstance(max_quality_function_calls, int) \
                     or max_quality_function_calls < 0:
-                raise ValueError('max_quality_function_calls must be an integer bigger than 0')
+                raise ValueError('Max_quality_function_calls must be an integer bigger than 0')
 
         self.best_scores = []
         self.mean_scores = []
@@ -105,6 +167,21 @@ class Evolution:
             t += 1
 
     def _is_done(self, stop_parameter: str, iterations: int, max_iterations: int, max_quality_function_calls: int):
+        """
+        Helper function for deciding if evolution process should terminate.
+
+        :param stop_parameter: This parameter defines when does evolution process end. There are two possible values of
+        this parameter defined in static constants - MAX_ITERATIONS and MAX_QUALITY_FUNCTION_CALLS.
+        :type stop_parameter: str
+        :param iterations: Current number of iterations of evolution process
+        :type iterations:  int
+        :param max_iterations: Maximum number of iterations of evolution process
+        :type max_iterations: int
+        :param max_quality_function_calls: Maximum number of
+        :type max_quality_function_calls:
+        :return:
+        :rtype:
+        """
         is_done = False
 
         if stop_parameter == self.MAX_ITERATIONS:
@@ -116,7 +193,13 @@ class Evolution:
 
         return is_done
 
-    def generate_first_generation(self):
+    def generate_first_generation(self) -> List[List[float]]:
+        """"
+        This method is used to generate first population for evolution process. Each parameter of candidates is
+        generated using uniform distribution on a interval given for that parameter in parameter bounds
+
+        :rtype: List[List[float]]
+        """
         population = []
 
         for _ in range(self.population_size):
@@ -133,13 +216,44 @@ class Evolution:
         return population
 
     def score(self, population: List[List[float]]) -> List[float]:
+        """
+        Creates list of scores for given population by applying quality function for each candidate
+
+        :param population: Population on which scoring process should be performed
+        :type population: List[List[float]]
+        :return: Scores for each corresponding candidate in population
+        :rtype: List[float]
+        """
         scores = []
         for candidate in population:
             scores.append(self.quality_function(candidate))
             self.quality_function_calls += 1
         return scores
 
+    def score_v2(self, population: List[List[float]]) -> List[float]:
+        """
+        #TODO change this to be main score method and test that it is working as it should
+        :param population: Population on which scoring process should be performed
+        :type population: List[List[float]]
+        :return: Scores for each corresponding candidate in population
+        :rtype: List[float]
+        """
+        scores = [self.quality_function(candidate) for candidate in population]
+        self.quality_function_calls += self.population_size
+
+        return scores
+
     def tournament_selection(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
+        """
+        This method applies tournament selection to a given population and returns selected candidates.
+
+        :param population: Population on which selection should be performed
+        :type population: List[List[float]
+        :param scores: List of scores for whole population
+        :type scores: List[float]
+        :return: Selected candidates
+        :rtype: List[List[float]
+        """
         selected_candidates = []
 
         for i in range(self.population_size):
@@ -164,14 +278,46 @@ class Evolution:
         return selected_candidates
 
     def no_crossing(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
+        """
+        Just returns given population. This method was created for simplicity of evolution method.
+        :param population:
+        :type population:
+        :param crossing_probability: Probability of crossing a single candidate with any randomly selected candidate.
+        This parameter is not used in method, but is required for crossing methods interface uniformity.
+        :type crossing_probability: float
+        :return: Returns given population, because no crossing is performed.
+        :rtype: List[List[float]]
+        """
         return population
 
     def generation_succession(self, population: List[List[float]], temporal_population: List[List[float]],
                               population_scores: List[float], termporal_population_scores: List[float]) \
             -> Tuple[List[List[float]], List[float]]:
+        """
+        Applies generation succession by returning just mutated and crossed candidates (temporal population).
+        :param population: Population from last iteration of evolution algorithm
+        :type population: List[List[float]]
+        :param temporal_population: Population created by mutation and crossing processes in current iteration of
+        evolution algorithm
+        :type temporal_population: List[List[float]]
+        :param population_scores:
+        :type population_scores:
+        :param termporal_population_scores:
+        :type termporal_population_scores:
+        :return:
+        :rtype:
+        """
         return temporal_population, termporal_population_scores
 
     def mutate(self, population: List[List[float]]) -> List[List[float]]:
+        """
+        Applies gaussian mutation to all parameters for all candidates in population
+
+        :param population: Population from last iteration of evolution algorithm
+        :type population: List[List[float]]
+        :return: Mutated population
+        :rtype: List[List[float]]
+        """
         mutated_population = []
         for candidate in population:
             modification_arr = random.normal(loc=0, scale=self.sigma, size=self.num_of_parameters)
@@ -179,28 +325,57 @@ class Evolution:
 
             mutated_population.append(mutated_candidate)
 
-        mutated_population = self.assert_parameters_are_bound(mutated_population)
+        mutated_population = self._assert_parameters_are_bound(mutated_population)
         return mutated_population
 
-    def assert_parameters_are_bound(self, mutated_values: List[List[float]]):
+    def _assert_parameters_are_bound(self, mutated_population: List[List[float]]):
+        """
+        This method checks all parameters for all candidates in population. If parameter is out of bound it is set to
+        maximum or minimum value for that parameter depending if it was above upper bound or below lower bound.
 
-        for index, parameters in enumerate(mutated_values):
+        :param mutated_population: Mutated population
+        :type mutated_population: List[List[float]]
+        :return: Mutated population with parameters values in specified bounds
+        :rtype: List[List[float]]
+        """
+        for index, parameters in enumerate(mutated_population):
             for parameter_number, value in enumerate(parameters):
                 lower_bound = self.parameter_bounds[parameter_number][0]
                 high_bound = self.parameter_bounds[parameter_number][1]
                 if value < lower_bound:
-                    mutated_values[index][parameter_number] = lower_bound
+                    mutated_population[index][parameter_number] = lower_bound
                 elif value > high_bound:
-                    mutated_values[index][parameter_number] = high_bound
+                    mutated_population[index][parameter_number] = high_bound
 
-        return mutated_values
+        return mutated_population
 
-    def print_best(self, k: int):
-        extended_population = list(zip(self.population, self.population_scores))
+    def get_best_candidates(self, n: int) -> List[List[float]]:
+        """
+        Returns n best candidates after evolution process.
 
-        extended_population.sort(key=lambda a: a[1], reverse=not self.minimize)
-        for i in range(k):
-            print('Score: {:.3f}, candidate {}'.format(extended_population[i][1], extended_population[i][0]))
+        :param n: Number of best candidates to return
+        :type n: int
+        :return: List of best candidates in descending order. At position 0 is the best candidate
+        :rtype: List[List[float]]
+        """
+        if len(self.population) == 0:
+            raise AssertionError('Population is empty')
+
+        sorted_population = sorted(self.population, key=lambda a: self.quality_function(a), reverse=not self.minimize)
+
+        return sorted_population[:n]
+
+    def print_best(self, n: int):
+        """
+        Prints n best candidates and their scores to the console
+
+        :param n: Number of best candidates to print
+        :type n: int
+        """
+        n_best_candidates = self.get_best_candidates(n)
+
+        for candidate in n_best_candidates:
+            print('Score: {:.3f}, candidate {}'.format(self.quality_function(candidate), candidate))
 
 
 def ackley_quality_function(parameters: List[float]):
@@ -235,7 +410,6 @@ if __name__ == '__main__':
     evolution.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS, max_quality_function_calls=10000)
 
     evolution.print_best(5)
-
     plt.plot(evolution.mean_scores)
     plt.plot(evolution.best_scores)
 
