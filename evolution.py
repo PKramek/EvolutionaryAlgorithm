@@ -1,113 +1,14 @@
 from __future__ import annotations  # Python 3.7 or higher required
 
 import math
-from abc import ABC, abstractmethod
 from typing import Callable, List, Tuple
 
 import matplotlib.pyplot as plt
 from numpy import random
 
-
-class SelectionStrategy(ABC):
-    def __init__(self, evolution: Evolution):
-        self.evolution = evolution
-
-    @abstractmethod
-    def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
-        pass
-
-
-class TournamentSelectionStrategy(SelectionStrategy):
-    def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
-        """
-        This method applies tournament selection to a given population and returns selected candidates.
-
-        :param population: Population on which selection should be performed
-        :type population: List[List[float]
-        :param scores: List of scores for whole population
-        :type scores: List[float]
-        :return: Selected candidates
-        :rtype: List[List[float]]
-        """
-        selected_candidates = []
-
-        for i in range(self.evolution.population_size):
-            contenders_indexes = random.choice(range(self.evolution.population_size), size=2, replace=True)
-
-            first_score = scores[contenders_indexes[0]]
-            second_score = scores[contenders_indexes[1]]
-
-            if self.evolution.minimize is True:
-                if first_score < second_score:
-                    better_one = population[contenders_indexes[0]]
-                else:
-                    better_one = population[contenders_indexes[1]]
-            else:
-                if first_score < second_score:
-                    better_one = population[contenders_indexes[1]]
-                else:
-                    better_one = population[contenders_indexes[0]]
-
-            selected_candidates.append(better_one)
-
-        return selected_candidates
-
-
-class CrossingStrategy(ABC):
-    def __init__(self, evolution: Evolution):
-        self.evolution = evolution
-
-    @abstractmethod
-    def cross(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
-        pass
-
-
-class NoCrossingStrategy(CrossingStrategy):
-    def cross(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
-        """
-        Just returns given population.
-        :param population:
-        :type population:
-        :param crossing_probability: Probability of crossing a single candidate with any randomly selected candidate.
-        This parameter is not used in method, but is required for crossing methods interface uniformity.
-        :type crossing_probability: float
-        :return: Returns given population, because no crossing is performed.
-        :rtype: List[List[float]]
-        """
-        return population
-
-
-class SuccessionStrategy(ABC):
-    def __init__(self, evolution: Evolution):
-        self.evolution = evolution
-
-    @abstractmethod
-    def apply_succession(self, population: List[List[float]], temporal_population: List[List[float]],
-                         population_scores: List[float], temporal_population_scores: List[float]) \
-            -> Tuple[List[List[float]], List[float]]:
-        pass
-
-
-class GenerationSuccessionStrategy(SuccessionStrategy):
-    def apply_succession(self, population: List[List[float]], temporal_population: List[List[float]],
-                         population_scores: List[float], temporal_population_scores: List[float]) \
-            -> Tuple[List[List[float]], List[float]]:
-        """
-        Applies generation succession by returning just mutated and crossed candidates (temporal population)
-        and their scores.
-        :param population: Population from last iteration of evolution algorithm
-        :type population: List[List[float]]
-        :param temporal_population: Population created by mutation and crossing processes in current iteration of
-        evolution algorithm
-        :type temporal_population: List[List[float]]
-        :param population_scores:
-        :type population_scores:
-        :param temporal_population_scores:
-        :type temporal_population_scores:
-        :return: Population and scores
-        :rtype: Tuple[List[List[float]], List[float]]
-        """
-        return temporal_population, temporal_population_scores
+from crossing import CrossingStrategy, NoCrossingStrategy
+from selection import SelectionStrategy, TournamentSelectionStrategy
+from succession import SuccessionStrategy, GenerationSuccessionStrategy
 
 
 class Evolution:
@@ -433,7 +334,7 @@ class Evolution:
         n_best_candidates = self.get_best_candidates(n)
 
         for candidate in n_best_candidates:
-            print('Score: {:.3f}, candidate {}'.format(self.quality_function(candidate), candidate))
+            print('Score: {:.2f}, candidate {}'.format(self.quality_function(candidate), candidate))
 
 
 def ackley_quality_function(parameters: List[float]):
