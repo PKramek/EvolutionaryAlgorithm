@@ -1,33 +1,129 @@
+from __future__ import annotations  # Python 3.7 or higher required
+
 import math
+from abc import ABC, abstractmethod
 from typing import Callable, List, Tuple
 
 import matplotlib.pyplot as plt
 from numpy import random
 
 
-class Evolution:
-    # TODO extract Selection, crossing and succession classes for strategy pattern
+class SelectionStrategy(ABC):
+    def __init__(self, evolution: Evolution):
+        self.evolution = evolution
 
-    # This constants are used to create one clear way of parametrizing objects of this class. When needed new methods
-    # and corresponding constants should be created.
+    @abstractmethod
+    def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
+        pass
+
+
+class TournamentSelectionStrategy(SelectionStrategy):
+    def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
+        """
+        This method applies tournament selection to a given population and returns selected candidates.
+
+        :param population: Population on which selection should be performed
+        :type population: List[List[float]
+        :param scores: List of scores for whole population
+        :type scores: List[float]
+        :return: Selected candidates
+        :rtype: List[List[float]]
+        """
+        selected_candidates = []
+
+        for i in range(self.evolution.population_size):
+            contenders_indexes = random.choice(range(self.evolution.population_size), size=2, replace=True)
+
+            first_score = scores[contenders_indexes[0]]
+            second_score = scores[contenders_indexes[1]]
+
+            if self.evolution.minimize is True:
+                if first_score < second_score:
+                    better_one = population[contenders_indexes[0]]
+                else:
+                    better_one = population[contenders_indexes[1]]
+            else:
+                if first_score < second_score:
+                    better_one = population[contenders_indexes[1]]
+                else:
+                    better_one = population[contenders_indexes[0]]
+
+            selected_candidates.append(better_one)
+
+        return selected_candidates
+
+
+class CrossingStrategy(ABC):
+    def __init__(self, evolution: Evolution):
+        self.evolution = evolution
+
+    @abstractmethod
+    def cross(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
+        pass
+
+
+class NoCrossingStrategy(CrossingStrategy):
+    def cross(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
+        """
+        Just returns given population.
+        :param population:
+        :type population:
+        :param crossing_probability: Probability of crossing a single candidate with any randomly selected candidate.
+        This parameter is not used in method, but is required for crossing methods interface uniformity.
+        :type crossing_probability: float
+        :return: Returns given population, because no crossing is performed.
+        :rtype: List[List[float]]
+        """
+        return population
+
+
+class SuccessionStrategy(ABC):
+    def __init__(self, evolution: Evolution):
+        self.evolution = evolution
+
+    @abstractmethod
+    def apply_succession(self, population: List[List[float]], temporal_population: List[List[float]],
+                         population_scores: List[float], temporal_population_scores: List[float]) \
+            -> Tuple[List[List[float]], List[float]]:
+        pass
+
+
+class GenerationSuccessionStrategy(SuccessionStrategy):
+    def apply_succession(self, population: List[List[float]], temporal_population: List[List[float]],
+                         population_scores: List[float], temporal_population_scores: List[float]) \
+            -> Tuple[List[List[float]], List[float]]:
+        """
+        Applies generation succession by returning just mutated and crossed candidates (temporal population)
+        and their scores.
+        :param population: Population from last iteration of evolution algorithm
+        :type population: List[List[float]]
+        :param temporal_population: Population created by mutation and crossing processes in current iteration of
+        evolution algorithm
+        :type temporal_population: List[List[float]]
+        :param population_scores:
+        :type population_scores:
+        :param temporal_population_scores:
+        :type temporal_population_scores:
+        :return: Population and scores
+        :rtype: Tuple[List[List[float]], List[float]]
+        """
+        return temporal_population, temporal_population_scores
+
+
+class Evolution:
+    # Those constants are used to create one clear way of parametrizing objects of this class.
 
     # Evolution stop method
     MAX_ITERATIONS = 'iterations'
     MAX_QUALITY_FUNCTION_CALLS = 'quality calls'
 
     # Selection methods
-    # All selection methods should have the same parameter list:
-    # (self, population: List[List[float]], scores: List[float])
     TOURNAMENT_SELECTION = 'Tournament selection'
 
     # Crossing methods
-    # All crossing methods should have the same parameter list:
-    # (self, population: List[List[float]], crossing_probability: float)
     NO_CROSSING = 'No crossing'
 
     # Succession methods
-    # (self, population: List[List[float]], temporal_population: List[List[float]],
-    # population_scores: List[float], temporal_population_scores: List[float])
     GENERATION_SUCCESSION = 'Generation succession'
 
     def __init__(self, population_size: int, sigma: float,
@@ -54,17 +150,17 @@ class Evolution:
         :param crossing_probability: Probability of crossing single candidate with any other candidate
         :type crossing_probability: float
         :param minimize: Parameter defining if algorithm should minimize of maximize value of quality function.
-                         If True is given then algorithm will minimize output of quality function.
+                        If True is given then algorithm will minimize output of quality function.
         :type minimize: bool
-        :param type_of_selection: Parameter deciding what form of selection is used in algorithm.
-                                 Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
-                                 that should be passed as value of this parameter.
+        :param type_of_selection: Parameter deciding what algorithm of selection is used in algorithm.
+                                  Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
+                                  that should be passed as value of this parameter.
         :type type_of_selection: str
-        :param type_of_crossing: Parameter deciding what form of crossing is used in algorithm.
+        :param type_of_crossing: Parameter deciding what algorithm of crossing is used in algorithm.
                                 Inside class there are constants defined in form <NAME OF CROSSING TYPE>_CROSSING,
                                 that should be passed as value of this parameter.
         :type type_of_crossing: str
-        :param type_of_succession: Parameter deciding what form of succession is used in algorithm.
+        :param type_of_succession: Parameter deciding what algorithm of succession is used in algorithm.
                                   Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
                                   that should be passed as value of this parameter.
         :type type_of_succession: str
@@ -72,43 +168,84 @@ class Evolution:
         if crossing_probability < 0 or crossing_probability > 1:
             raise ValueError('Probability of crossing must be in range [0, 1]')
 
-        # Different methods are stored in dictionaries to avoid creating
-        # convoluted if-else statements for algorithm parametrization
-
-        selection_methods = {self.TOURNAMENT_SELECTION: self.tournament_selection}
-        crossing_methods = {self.NO_CROSSING: self.no_crossing}
-        succession_methods = {self.GENERATION_SUCCESSION: self.generation_succession}
-
         self.population_size = population_size
         self.sigma = sigma
         self.quality_function = quality_function
         self.num_of_parameters = dimensionality
         self.parameter_bounds = parameter_bounds
         self.crossing_probability = crossing_probability
+        self.minimize = minimize
 
-        self.select: Callable = selection_methods.get(type_of_selection)
-        self.cross: Callable = crossing_methods.get(type_of_crossing)
-        self.apply_succession: Callable = succession_methods.get(type_of_succession)
-
-        if self.select is None:
-            raise ValueError('Selection method not found')
-
-        if self.cross is None:
-            raise ValueError('Crossing method not found')
-
-        if self.apply_succession is None:
-            raise ValueError('Succession method not found')
+        self.select_strategy: SelectionStrategy = self.selection_factory(type_of_selection)
+        self.crossing_strategy: CrossingStrategy = self.crossing_factory(type_of_crossing)
+        self.succession_strategy: SuccessionStrategy = self.succession_factory(type_of_succession)
 
         self.quality_function_calls = 0
 
         self.population = []
         self.population_scores = []
 
-        # Parameter used to determine if we want to minimize or maximize function
-        self.minimize = minimize
-
         self.best_scores = []
         self.mean_scores = []
+
+    def selection_factory(self, selection_type: str) -> SelectionStrategy:
+        """
+        Factory method for selection strategy objects.
+
+        :param selection_type: Parameter deciding what algorithm of selection is used in algorithm.
+                               Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
+                               that should be passed as value of this parameter.
+        :type selection_type: str
+        :return: Selection strategy object
+        :rtype: SelectionStrategy
+        """
+        selection_methods = {self.TOURNAMENT_SELECTION: TournamentSelectionStrategy}
+
+        selection = selection_methods.get(selection_type)
+        if selection is None:
+            raise ValueError('Selection method not found')
+
+        selection_object = selection(self)
+        return selection_object
+
+    def crossing_factory(self, crossing_type: str) -> CrossingStrategy:
+        """
+        Factory method for crossing strategy objects.
+
+        :param crossing_type: Parameter deciding what algorithm of crossing is used in algorithm.
+                              Inside class there are constants defined in form <NAME OF CROSSING TYPE>_CROSSING,
+                              that should be passed as value of this parameter.
+        :type crossing_type: str
+        :return: Crossing strategy object
+        :rtype: CrossingStrategy
+        """
+        crossing_methods = {self.NO_CROSSING: NoCrossingStrategy}
+
+        crossing_method = crossing_methods.get(crossing_type)
+        if crossing_method is None:
+            raise ValueError('Crossing method not found')
+
+        crossing_object = crossing_method(self)
+        return crossing_object
+
+    def succession_factory(self, succession_type: str) -> SuccessionStrategy:
+        """
+
+        :param succession_type: Parameter deciding what algorithm of succession is used in algorithm.
+                                Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
+                                that should be passed as value of this parameter.
+        :type succession_type: str
+        :return: Succession strategy object
+        :rtype: SuccessionStrategy
+        """
+        succession_methods = {self.GENERATION_SUCCESSION: GenerationSuccessionStrategy}
+
+        succession_method = succession_methods.get(succession_type)
+        if succession_method is None:
+            raise ValueError('Succession method not found')
+
+        succession_object = succession_method(self)
+        return succession_object
 
     def evolve(self, stop_parameter: str, *, max_iterations: int = None, max_quality_function_calls: int = None):
         """
@@ -147,13 +284,13 @@ class Evolution:
 
         while not self._is_done(stop_parameter, t, max_iterations, max_quality_function_calls):
 
-            temporal_population = self.select(self.population, self.population_scores)
+            temporal_population = self.select_strategy.select(self.population, self.population_scores)
             temporal_population = self.mutate(temporal_population)
-            temporal_population = self.cross(temporal_population, self.crossing_probability)
+            temporal_population = self.crossing_strategy.cross(temporal_population, self.crossing_probability)
 
             temporal_population_scores = self.score(temporal_population)
 
-            self.population, self.population_scores = self.apply_succession(
+            self.population, self.population_scores = self.succession_strategy.apply_succession(
                 self.population, temporal_population,
                 self.population_scores, temporal_population_scores
             )
@@ -196,7 +333,7 @@ class Evolution:
     def generate_first_generation(self) -> List[List[float]]:
         """"
         This method is used to generate first population for evolution process. Each parameter of candidates is
-        generated using uniform distribution on a interval given for that parameter in parameter bounds
+        generated using uniform distribution on a interval given for that parameter in parameter bounds.
 
         :rtype: List[List[float]]
         """
@@ -217,22 +354,9 @@ class Evolution:
 
     def score(self, population: List[List[float]]) -> List[float]:
         """
-        Creates list of scores for given population by applying quality function for each candidate
+        Creates list of scores for given population by applying quality function for each candidate and updates number
+        of quality function calls.
 
-        :param population: Population on which scoring process should be performed
-        :type population: List[List[float]]
-        :return: Scores for each corresponding candidate in population
-        :rtype: List[float]
-        """
-        scores = []
-        for candidate in population:
-            scores.append(self.quality_function(candidate))
-            self.quality_function_calls += 1
-        return scores
-
-    def score_v2(self, population: List[List[float]]) -> List[float]:
-        """
-        #TODO change this to be main score method and test that it is working as it should
         :param population: Population on which scoring process should be performed
         :type population: List[List[float]]
         :return: Scores for each corresponding candidate in population
@@ -243,75 +367,9 @@ class Evolution:
 
         return scores
 
-    def tournament_selection(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
-        """
-        This method applies tournament selection to a given population and returns selected candidates.
-
-        :param population: Population on which selection should be performed
-        :type population: List[List[float]
-        :param scores: List of scores for whole population
-        :type scores: List[float]
-        :return: Selected candidates
-        :rtype: List[List[float]
-        """
-        selected_candidates = []
-
-        for i in range(self.population_size):
-            contenders_indexes = random.choice(range(self.population_size), size=2, replace=True)
-
-            first_score = scores[contenders_indexes[0]]
-            second_score = scores[contenders_indexes[1]]
-
-            if self.minimize is True:
-                if first_score < second_score:
-                    better_one = population[contenders_indexes[0]]
-                else:
-                    better_one = population[contenders_indexes[1]]
-            else:
-                if first_score < second_score:
-                    better_one = population[contenders_indexes[1]]
-                else:
-                    better_one = population[contenders_indexes[0]]
-
-            selected_candidates.append(better_one)
-
-        return selected_candidates
-
-    def no_crossing(self, population: List[List[float]], crossing_probability: float) -> List[List[float]]:
-        """
-        Just returns given population. This method was created for simplicity of evolution method.
-        :param population:
-        :type population:
-        :param crossing_probability: Probability of crossing a single candidate with any randomly selected candidate.
-        This parameter is not used in method, but is required for crossing methods interface uniformity.
-        :type crossing_probability: float
-        :return: Returns given population, because no crossing is performed.
-        :rtype: List[List[float]]
-        """
-        return population
-
-    def generation_succession(self, population: List[List[float]], temporal_population: List[List[float]],
-                              population_scores: List[float], termporal_population_scores: List[float]) \
-            -> Tuple[List[List[float]], List[float]]:
-        """
-        Applies generation succession by returning just mutated and crossed candidates (temporal population).
-        :param population: Population from last iteration of evolution algorithm
-        :type population: List[List[float]]
-        :param temporal_population: Population created by mutation and crossing processes in current iteration of
-        evolution algorithm
-        :type temporal_population: List[List[float]]
-        :param population_scores:
-        :type population_scores:
-        :param termporal_population_scores:
-        :type termporal_population_scores:
-        :return:
-        :rtype:
-        """
-        return temporal_population, termporal_population_scores
-
     def mutate(self, population: List[List[float]]) -> List[List[float]]:
         """
-        Applies gaussian mutation to all parameters for all candidates in population
+        Applies gaussian mutation to all parameters for all candidates in population.
 
         :param population: Population from last iteration of evolution algorithm
         :type population: List[List[float]]
