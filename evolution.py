@@ -75,6 +75,10 @@ class Evolution:
                     or max_quality_function_calls < 0:
                 raise ValueError('max_quality_function_calls must be an integer bigger than 0')
 
+        self.best_scores = []
+        self.mean_scores = []
+        self.quality_function_calls = 0
+
         t = 0
 
         self.population = self.generate_first_generation()
@@ -214,7 +218,6 @@ if __name__ == '__main__':
     random.seed(42)
 
     ackley_parameter_bounds = [(-32, 32)] * 10
-
     number_of_experiment_repetitions = 25
 
     small_population_size = 20
@@ -223,12 +226,15 @@ if __name__ == '__main__':
     big_population_last_iterations_populations = []
     small_population_last_iterations_populations = []
 
-    evolution = Evolution(20, 0.25, ackley_quality_function, 10, ackley_parameter_bounds, 1,
+    evolution = Evolution(100, 0.25, ackley_quality_function, 10, ackley_parameter_bounds, 1,
                           minimize=True,
                           type_of_selection=Evolution.TOURNAMENT_SELECTION,
                           type_of_crossing=Evolution.NO_CROSSING,
                           type_of_succession=Evolution.GENERATION_SUCCESSION)
+
     evolution.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS, max_quality_function_calls=10000)
+    evolution.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS, max_quality_function_calls=10000)
+
     evolution.print_best(5)
 
     plt.plot(evolution.mean_scores)
