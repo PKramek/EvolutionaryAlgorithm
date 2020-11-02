@@ -6,17 +6,19 @@ from numpy import random
 
 
 class Evolution:
+    # This constants are used to create one clear way of parametrizing objects of this class
+
     # Evolution stop method
     MAX_ITERATIONS = 'iterations'
     MAX_QUALITY_FUNCTION_CALLS = 'quality calls'
 
-    # Selection types
+    # Selection methods
     TOURNAMENT_SELECTION = 'Tournament selection'
 
-    # Crossing types
+    # Crossing methods
     NO_CROSSING = 'No crossing'
 
-    # Succession types
+    # Succession methods
     GENERATION_SUCCESSION = 'Generation succession'
 
     def __init__(self, population_size: int, sigma: float,
@@ -30,14 +32,11 @@ class Evolution:
                  type_of_succession: str,
                  ):
 
-        # Different methods are stored in dictionaries to avoid creating
-        # convoluted if-else statements for algorithm parametrization
-
-        # TODO add crossing_probability checking
-        # TODO add sigma checking
-
         if crossing_probability < 0 or crossing_probability > 1:
             raise ValueError('Probability of crossing must be in range [0, 1]')
+
+        # Different methods are stored in dictionaries to avoid creating
+        # convoluted if-else statements for algorithm parametrization
 
         selection_methods = {self.TOURNAMENT_SELECTION: self.tournament_selection}
         crossing_methods = {self.NO_CROSSING: self.no_crossing}
