@@ -4,7 +4,7 @@ from typing import List, TYPE_CHECKING
 from numpy import random
 
 if TYPE_CHECKING:
-    from evolution import Evolution
+    from Evolution.evolution import Evolution
 
 
 class SelectionStrategy(ABC):

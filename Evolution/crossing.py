@@ -4,7 +4,7 @@ from typing import List
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from evolution import Evolution
+    from Evolution.evolution import Evolution
 
 
 class CrossingStrategy(ABC):
