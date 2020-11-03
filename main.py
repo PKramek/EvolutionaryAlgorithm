@@ -19,22 +19,19 @@ def ackley_quality_function(parameters: List[float]):
 
 random.seed(42)
 
-ackley_parameter_bounds = [(-32, 32)] * 10
-number_of_experiment_repetitions = 25
+ackley_dimensionality = 10
+ackley_parameter_bounds = [(-32, 32)] * ackley_dimensionality
 
-small_population_size = 20
+number_of_experiment_repetitions = 30
+small_population_size = 10
 big_population_size = 100
 
-big_population_last_iterations_populations = []
-small_population_last_iterations_populations = []
-
-evolution = Evolution(100, 0.25, ackley_quality_function, 10, ackley_parameter_bounds, 1,
+evolution = Evolution(10, 0.25, ackley_quality_function, 10, ackley_parameter_bounds, 1,
                       minimize=True,
                       type_of_selection=Evolution.TOURNAMENT_SELECTION,
                       type_of_crossing=Evolution.NO_CROSSING,
                       type_of_succession=Evolution.GENERATION_SUCCESSION)
 
-evolution.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS, max_quality_function_calls=10000)
 evolution.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS, max_quality_function_calls=10000)
 
 evolution.print_best(5)
