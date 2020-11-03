@@ -87,65 +87,6 @@ class Evolution:
         self.best_scores = []
         self.mean_scores = []
 
-    def selection_factory(self, selection_type: str) -> SelectionStrategy:
-        """
-        Factory method for selection strategy objects.
-
-        :param selection_type: Parameter deciding what algorithm of selection is used in algorithm.
-                               Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
-                               that should be passed as value of this parameter.
-        :type selection_type: str
-        :return: Selection strategy object
-        :rtype: SelectionStrategy
-        """
-        selection_methods = {self.TOURNAMENT_SELECTION: TournamentSelectionStrategy}
-
-        selection = selection_methods.get(selection_type)
-        if selection is None:
-            raise ValueError('Selection method not found')
-
-        selection_object = selection(self)
-        return selection_object
-
-    def crossing_factory(self, crossing_type: str) -> CrossingStrategy:
-        """
-        Factory method for crossing strategy objects.
-
-        :param crossing_type: Parameter deciding what algorithm of crossing is used in algorithm.
-                              Inside class there are constants defined in form <NAME OF CROSSING TYPE>_CROSSING,
-                              that should be passed as value of this parameter.
-        :type crossing_type: str
-        :return: Crossing strategy object
-        :rtype: CrossingStrategy
-        """
-        crossing_methods = {self.NO_CROSSING: NoCrossingStrategy}
-
-        crossing_method = crossing_methods.get(crossing_type)
-        if crossing_method is None:
-            raise ValueError('Crossing method not found')
-
-        crossing_object = crossing_method(self)
-        return crossing_object
-
-    def succession_factory(self, succession_type: str) -> SuccessionStrategy:
-        """
-
-        :param succession_type: Parameter deciding what algorithm of succession is used in algorithm.
-                                Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
-                                that should be passed as value of this parameter.
-        :type succession_type: str
-        :return: Succession strategy object
-        :rtype: SuccessionStrategy
-        """
-        succession_methods = {self.GENERATION_SUCCESSION: GenerationSuccessionStrategy}
-
-        succession_method = succession_methods.get(succession_type)
-        if succession_method is None:
-            raise ValueError('Succession method not found')
-
-        succession_object = succession_method(self)
-        return succession_object
-
     def evolve(self, stop_parameter: str, *, max_iterations: int = None, max_quality_function_calls: int = None):
         """
         Main method of this class, it performs evolution algorithm.
@@ -229,6 +170,65 @@ class Evolution:
                 is_done = True
 
         return is_done
+
+    def selection_factory(self, selection_type: str) -> SelectionStrategy:
+        """
+        Factory method for selection strategy objects.
+
+        :param selection_type: Parameter deciding what algorithm of selection is used in algorithm.
+                               Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
+                               that should be passed as value of this parameter.
+        :type selection_type: str
+        :return: Selection strategy object
+        :rtype: SelectionStrategy
+        """
+        selection_methods = {self.TOURNAMENT_SELECTION: TournamentSelectionStrategy}
+
+        selection = selection_methods.get(selection_type)
+        if selection is None:
+            raise ValueError('Selection method not found')
+
+        selection_object = selection(self)
+        return selection_object
+
+    def crossing_factory(self, crossing_type: str) -> CrossingStrategy:
+        """
+        Factory method for crossing strategy objects.
+
+        :param crossing_type: Parameter deciding what algorithm of crossing is used in algorithm.
+                              Inside class there are constants defined in form <NAME OF CROSSING TYPE>_CROSSING,
+                              that should be passed as value of this parameter.
+        :type crossing_type: str
+        :return: Crossing strategy object
+        :rtype: CrossingStrategy
+        """
+        crossing_methods = {self.NO_CROSSING: NoCrossingStrategy}
+
+        crossing_method = crossing_methods.get(crossing_type)
+        if crossing_method is None:
+            raise ValueError('Crossing method not found')
+
+        crossing_object = crossing_method(self)
+        return crossing_object
+
+    def succession_factory(self, succession_type: str) -> SuccessionStrategy:
+        """
+
+        :param succession_type: Parameter deciding what algorithm of succession is used in algorithm.
+                                Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
+                                that should be passed as value of this parameter.
+        :type succession_type: str
+        :return: Succession strategy object
+        :rtype: SuccessionStrategy
+        """
+        succession_methods = {self.GENERATION_SUCCESSION: GenerationSuccessionStrategy}
+
+        succession_method = succession_methods.get(succession_type)
+        if succession_method is None:
+            raise ValueError('Succession method not found')
+
+        succession_object = succession_method(self)
+        return succession_object
 
     def generate_first_generation(self) -> List[List[float]]:
         """"
