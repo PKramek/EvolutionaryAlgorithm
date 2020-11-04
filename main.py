@@ -19,6 +19,9 @@ def ackley_quality_function(parameters: List[float]):
     return (-20 * math.exp(-0.2 * sqrt_of_mean_of_squares)) - math.exp(sum_of_cosines / n) + 20 + math.e
 
 
+def sphere_quality_function(parameters: List[float]):
+    return sum([x ** 2 for x in parameters])
+
 if __name__ == '__main__':
     random.seed(42)
 
@@ -27,10 +30,13 @@ if __name__ == '__main__':
     ackley_dimensionality = 10
     ackley_parameter_bounds = [(-32, 32)] * ackley_dimensionality
 
+    sphere_dimensionality = 10
+    sphere_parameter_bounds = [(-20, 20)] * sphere_dimensionality
+
     number_of_experiment_repetitions = 25
 
     minimizing_function = True
-    sigma = 0.25
+    sigma = 0.125
     small_population_size = 10
     big_population_size = 100
 
@@ -44,9 +50,9 @@ if __name__ == '__main__':
     results_directory_name = 'results/'
 
     evolution_small_population = Evolution(small_population_size, sigma,
-                                           ackley_quality_function,
-                                           ackley_dimensionality,
-                                           ackley_parameter_bounds, 1,
+                                           sphere_quality_function,
+                                           sphere_dimensionality,
+                                           sphere_parameter_bounds, 1,
                                            minimize=minimizing_function,
                                            type_of_selection=Evolution.TOURNAMENT_SELECTION,
                                            type_of_crossing=Evolution.NO_CROSSING,
@@ -54,9 +60,9 @@ if __name__ == '__main__':
                                            )
 
     evolution_big_population = Evolution(big_population_size, sigma,
-                                         ackley_quality_function,
-                                         ackley_dimensionality,
-                                         ackley_parameter_bounds, 1,
+                                         sphere_quality_function,
+                                         sphere_dimensionality,
+                                         sphere_parameter_bounds, 1,
                                          minimize=minimizing_function,
                                          type_of_selection=Evolution.TOURNAMENT_SELECTION,
                                          type_of_crossing=Evolution.NO_CROSSING,
