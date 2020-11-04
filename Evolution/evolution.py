@@ -2,6 +2,7 @@ from __future__ import annotations  # Python 3.7 or higher required
 
 from typing import Callable, List, Tuple
 
+import matplotlib.pyplot as plt
 from numpy import random
 
 from Evolution.benchmark import Benchmark
@@ -12,6 +13,10 @@ from Evolution.succession import SuccessionStrategy, GenerationSuccessionStrateg
 
 class Evolution:
     # Those constants are used to create one clear way of parametrizing objects of this class.
+
+    # If new methods of selection, crossing or succession are needed, user should create according classes by extending
+    # correct abstract base class, create corresponding static constant in this class and update factory method to
+    # include new class.
 
     # Evolution stop method
     MAX_ITERATIONS = 'iterations'
@@ -131,7 +136,6 @@ class Evolution:
         self.population = self.generate_first_generation()
         self.population_scores = self.score(self.population)
 
-
         while not self._is_done(stop_parameter, t, max_iterations, max_quality_function_calls):
             benchmark.collect_data(self)
 
@@ -151,8 +155,6 @@ class Evolution:
                 self.best_scores.append(min(self.population_scores))
             else:
                 self.best_scores.append(max(self.population_scores))
-
-            # benchmark.collect_data(self)
 
             t += 1
         benchmark.collect_data(self)
@@ -227,6 +229,7 @@ class Evolution:
 
     def succession_factory(self, succession_type: str) -> SuccessionStrategy:
         """
+        Factory method for succession strategy objects.
 
         :param succession_type: Parameter deciding what algorithm of succession is used in algorithm.
                                 Inside class there are constants defined in form <NAME OF SUCCESSION TYPE>_SUCCESSION,
@@ -348,3 +351,17 @@ class Evolution:
 
         for candidate in n_best_candidates:
             print('Score: {:.2f}, candidate {}'.format(self.quality_function(candidate), candidate))
+
+    def plot_evolution(self):
+        """
+        Creates a plot of best and mean values in evolution process.
+
+        :return: None
+        :rtype: None
+        """
+        plt.xlabel('Iterations of evolution algorithm')
+        plt.ylabel('Best and Mean values of quality function')
+        plt.plot(self.best_scores, label='Best score')
+        plt.plot(self.mean_scores, label='Mean score')
+        plt.legend()
+        plt.show()

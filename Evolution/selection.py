@@ -8,15 +8,33 @@ if TYPE_CHECKING:
 
 
 class SelectionStrategy(ABC):
+    """
+    Abstract base class for selection strategy objects.
+    """
+
     def __init__(self, evolution: 'Evolution'):
         self.evolution = evolution
 
     @abstractmethod
     def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
+        """
+        Abstract method for selection.
+
+        :param population: Population on which selection should be performed
+        :type population: List[List[float]
+        :param scores: List of scores for whole population
+        :type scores: List[float]
+        :return: Selected candidates
+        :rtype: List[List[float]]
+        """
         pass
 
 
 class TournamentSelectionStrategy(SelectionStrategy):
+    """
+    Class implementing tournament selection with n equal to 2.
+    """
+
     def select(self, population: List[List[float]], scores: List[float]) -> List[List[float]]:
         """
         This method applies tournament selection to a given population and returns selected candidates.

@@ -8,6 +8,10 @@ if TYPE_CHECKING:
 
 
 class SuccessionStrategy(ABC):
+    """
+    Abstract base class for succession strategy objects.
+    """
+
     def __init__(self, evolution: 'Evolution'):
         self.evolution = evolution
 
@@ -15,6 +19,21 @@ class SuccessionStrategy(ABC):
     def apply_succession(self, population: List[List[float]], temporal_population: List[List[float]],
                          population_scores: List[float], temporal_population_scores: List[float]) \
             -> Tuple[List[List[float]], List[float]]:
+        """
+        Abstract method for succession.
+
+        :param population: Population from last iteration of evolution algorithm
+        :type population: List[List[float]]
+        :param temporal_population: Population created by mutation and crossing processes in current iteration of
+        evolution algorithm
+        :type temporal_population: List[List[float]]
+        :param population_scores:
+        :type population_scores:
+        :param temporal_population_scores:
+        :type temporal_population_scores:
+        :return: Population and scores
+        :rtype: Tuple[List[List[float]], List[float]]
+        """
         pass
 
 

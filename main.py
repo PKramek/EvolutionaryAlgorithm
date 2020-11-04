@@ -28,10 +28,11 @@ if __name__ == '__main__':
     # Variables describing optimized function
     sphere_dimensionality = 10
     sphere_parameter_bounds = [(-20, 20)] * sphere_dimensionality
+    sphere_optimal_quality_function_value = 0
 
     # Objects used for collection and processing of data from evolution process
-    benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function)
-    benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function)
+    benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_quality_function_value)
+    benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_quality_function_value)
 
     results_dict = {'10k': {},
                     '100k': {}}
@@ -57,6 +58,7 @@ if __name__ == '__main__':
                                          type_of_crossing=Evolution.NO_CROSSING,
                                          type_of_succession=Evolution.GENERATION_SUCCESSION,
                                          )
+
     # Dictionary used to shorten and improve readability of output files and displayed results
     shorthands = {
         10000: '10k',
