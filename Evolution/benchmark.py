@@ -154,7 +154,7 @@ class MyBenchmark(Benchmark):
         """
         array_of_vectors = [self.scores_100, self.scores_1000, self.scores_10000, self.scores_100000]
         plt.boxplot(array_of_vectors)
-        plt.ylabel('Quality function value')
+        plt.ylabel('Distance from optimum')
         plt.xlabel('Quality function calls')
         plt.xticks([1, 2, 3, 4], ['100', '1000', '10000', '100000'])
         plt.savefig(name_of_the_file)
