@@ -1,4 +1,4 @@
-import math
+import json
 from pprint import pprint
 from time import time
 from typing import List
@@ -9,40 +9,29 @@ from Evolution.benchmark import MyBenchmark
 from Evolution.evolution import Evolution
 
 
-def ackley_quality_function(parameters: List[float]):
-    n = len(parameters)
-
-    sum_of_squares = sum([x ** 2 for x in parameters])
-    sqrt_of_mean_of_squares = math.sqrt(sum_of_squares / n)
-    sum_of_cosines = sum([math.cos(2 * math.pi * x) for x in parameters])
-
-    return (-20 * math.exp(-0.2 * sqrt_of_mean_of_squares)) - math.exp(sum_of_cosines / n) + 20 + math.e
-
-
 def sphere_quality_function(parameters: List[float]):
     return sum([x ** 2 for x in parameters])
+
 
 if __name__ == '__main__':
     random.seed(42)
 
     start_time = time()
 
-    ackley_dimensionality = 10
-    ackley_parameter_bounds = [(-32, 32)] * ackley_dimensionality
-
-    sphere_dimensionality = 10
-    sphere_parameter_bounds = [(-20, 20)] * sphere_dimensionality
-
     number_of_experiment_repetitions = 25
 
-    minimizing_function = True
+    is_algorithm_minimizing_function = True
     sigma = 0.125
     small_population_size = 10
     big_population_size = 100
 
+    # Variables describing optimized function
+    sphere_dimensionality = 10
+    sphere_parameter_bounds = [(-20, 20)] * sphere_dimensionality
+
     # Objects used for collection and processing of data from evolution process
-    benchmark_small_population = MyBenchmark(minimizing_function)
-    benchmark_big_population = MyBenchmark(minimizing_function)
+    benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function)
+    benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function)
 
     results_dict = {'10k': {},
                     '100k': {}}
@@ -53,7 +42,7 @@ if __name__ == '__main__':
                                            sphere_quality_function,
                                            sphere_dimensionality,
                                            sphere_parameter_bounds, 1,
-                                           minimize=minimizing_function,
+                                           minimize=is_algorithm_minimizing_function,
                                            type_of_selection=Evolution.TOURNAMENT_SELECTION,
                                            type_of_crossing=Evolution.NO_CROSSING,
                                            type_of_succession=Evolution.GENERATION_SUCCESSION,
@@ -63,12 +52,12 @@ if __name__ == '__main__':
                                          sphere_quality_function,
                                          sphere_dimensionality,
                                          sphere_parameter_bounds, 1,
-                                         minimize=minimizing_function,
+                                         minimize=is_algorithm_minimizing_function,
                                          type_of_selection=Evolution.TOURNAMENT_SELECTION,
                                          type_of_crossing=Evolution.NO_CROSSING,
                                          type_of_succession=Evolution.GENERATION_SUCCESSION,
                                          )
-
+    # Dictionary used to shorten and improve readability of output files and displayed results
     shorthands = {
         10000: '10k',
         100000: '100k'
@@ -102,8 +91,6 @@ if __name__ == '__main__':
         results_dict[shorthands[max_quality_fun_calls]]['big population'] = big_population_results
 
     end_time = time()
-
-    import json
 
     with open(results_directory_name + results_filename, 'w', encoding='utf-8') as f:
         json.dump(results_dict, f, ensure_ascii=False, indent=4)

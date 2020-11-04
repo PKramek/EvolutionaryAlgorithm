@@ -8,17 +8,41 @@ if TYPE_CHECKING:
     from Evolution.evolution import Evolution
 
 
-class Benchmark():
+class Benchmark:
+    """
+    This abstract base class for benchmarks. Members of this class should be passed as parameter evolution function.
+    Every iteration of evolution process collect_data is called, which allows objects of this class to collect necessary
+    data from Evolution object
+    """
+
     @abstractmethod
     def collect_data(self, evolution: 'Evolution'):
+        """
+        This method is called every iteration of evolution process.
+
+        :param evolution: Object of class Evolution, from which data will be collected
+        :type evolution: Evolution
+        :return: None
+        :rtype: None
+        """
         pass
 
     @abstractmethod
     def get_results(self) -> dict:
+        """
+        Method that calculates necessary results and returns them in a dictionary
+
+        :return: Dictionary containing calculated results
+        :rtype: dict
+        """
         pass
 
 
 class NoBenchmark(Benchmark):
+    """
+    Class representing situation when user does not want to perform any data collection in evolution process.
+    """
+
     def collect_data(self, evolution: 'Evolution'):
         pass
 
@@ -27,14 +51,24 @@ class NoBenchmark(Benchmark):
 
 
 class MyBenchmark(Benchmark):
-    def __init__(self, minimize: bool):
+    """
+    This benchmark collects information about scores of whole population after 100, 1000, 10000 and 100000 quality
+    function calls. When get_results is called it calculates best, worst, mean and median scores as well as standard
+    deviation of all scores
+    """
+
+    def __init__(self, is_algorithm_minimizing_function: bool):
+        """
+        :param is_algorithm_minimizing_function:
+        :type is_algorithm_minimizing_function: bool
+        """
         super().__init__()
         self.scores_100 = []
         self.scores_1000 = []
         self.scores_10000 = []
         self.scores_100000 = []
 
-        self.minimize = minimize
+        self.is_algorithm_minimizing_function = is_algorithm_minimizing_function
 
     def collect_data(self, evolution: 'Evolution'):
         if evolution.quality_function_calls == 100:
@@ -61,7 +95,7 @@ class MyBenchmark(Benchmark):
                     'mean': round(mean(dataset), 2),
                     'std': round(std(dataset), 2)
                 }
-                if self.minimize is True:
+                if self.is_algorithm_minimizing_function is True:
                     results[key]['best'] = round(min(dataset), 2)
                     results[key]['worst'] = round(max(dataset), 2)
                 else:
