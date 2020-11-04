@@ -4,6 +4,7 @@ from typing import Callable, List, Tuple
 
 from numpy import random
 
+from Evolution.benchmark import Benchmark
 from Evolution.crossing import CrossingStrategy, NoCrossingStrategy
 from Evolution.selection import SelectionStrategy, TournamentSelectionStrategy
 from Evolution.succession import SuccessionStrategy, GenerationSuccessionStrategy
@@ -33,7 +34,7 @@ class Evolution:
                  *,
                  type_of_selection: str,
                  type_of_crossing: str,
-                 type_of_succession: str,
+                 type_of_succession: str
                  ):
         """
         :param population_size: Defines population size to be used in evolution process
@@ -87,9 +88,12 @@ class Evolution:
         self.best_scores = []
         self.mean_scores = []
 
-    def evolve(self, stop_parameter: str, *, max_iterations: int = None, max_quality_function_calls: int = None):
+    def evolve(self, stop_parameter: str, *, benchmark: Benchmark,
+               max_iterations: int = None, max_quality_function_calls: int = None,
+               ):
         """
         Main method of this class, it performs evolution algorithm.
+
 
         :param stop_parameter: This parameter defines when does evolution process end. There are two possible values of
         this parameter defined in static constants - MAX_ITERATIONS and MAX_QUALITY_FUNCTION_CALLS.
@@ -100,6 +104,9 @@ class Evolution:
         :param max_quality_function_calls: Defines maximum number of calls of quality function in evolution algorithm.
         If stop_parameter is set to MAX_QUALITY_FUNCTION_CALLS this parameter must be passed.
         :type max_quality_function_calls: int
+        :param benchmark: Benchmark object class, which collect_data method will be called every iteration of evolution
+        algorithm
+        :type benchmark: Benchmark
         """
         if stop_parameter not in [self.MAX_ITERATIONS, self.MAX_QUALITY_FUNCTION_CALLS]:
             raise ValueError('Stop parameter not found')
@@ -113,6 +120,8 @@ class Evolution:
                     or max_quality_function_calls < 0:
                 raise ValueError('Max_quality_function_calls must be an integer bigger than 0')
 
+        assert isinstance(benchmark, Benchmark)
+
         self.best_scores = []
         self.mean_scores = []
         self.quality_function_calls = 0
@@ -122,7 +131,9 @@ class Evolution:
         self.population = self.generate_first_generation()
         self.population_scores = self.score(self.population)
 
+
         while not self._is_done(stop_parameter, t, max_iterations, max_quality_function_calls):
+            benchmark.collect_data(self)
 
             temporal_population = self.select_strategy.select(self.population, self.population_scores)
             temporal_population = self.mutate(temporal_population)
@@ -141,7 +152,10 @@ class Evolution:
             else:
                 self.best_scores.append(max(self.population_scores))
 
+            # benchmark.collect_data(self)
+
             t += 1
+        benchmark.collect_data(self)
 
     def _is_done(self, stop_parameter: str, iterations: int, max_iterations: int,
                  max_quality_function_calls: int) -> bool:
