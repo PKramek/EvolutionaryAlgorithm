@@ -21,13 +21,13 @@ if __name__ == '__main__':
     number_of_experiment_repetitions = 25
 
     is_algorithm_minimizing_function = True
-    sigma = 0.125
+    sigma = 0.2
     small_population_size = 10
     big_population_size = 100
 
     # Variables describing optimized function
     sphere_dimensionality = 10
-    sphere_parameter_bounds = [(-20, 20)] * sphere_dimensionality
+    sphere_parameter_bounds = [(-100, 100)] * sphere_dimensionality
     sphere_optimal_quality_function_value = 0
 
     # Objects used for collection and processing of data from evolution process
