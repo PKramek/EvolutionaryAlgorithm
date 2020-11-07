@@ -52,15 +52,15 @@ class NoBenchmark(Benchmark):
 
 class MyBenchmark(Benchmark):
     """
-    This benchmark collects information about scores of whole population after 100, 1000, 10000 and 100000 quality
+    This benchmark collects information about scores of whole population after 100, 1000, 10000 and 100000 objective
     function calls. When get_results is called it calculates best, worst, mean and median scores as well as standard
     deviation of all scores.
     """
 
-    def __init__(self, is_algorithm_minimizing_function: bool, optimal_quality_function_value: float):
+    def __init__(self, is_algorithm_minimizing_function: bool, optimal_objective_function_value: float):
         """
-        :param optimal_quality_function_value: Optimal value for quality function
-        :type optimal_quality_function_value: float
+        :param optimal_objective_function_value: Optimal value for objective function
+        :type optimal_objective_function_value: float
         :param is_algorithm_minimizing_function: This parameter is used to select best and worst candidates
         :type is_algorithm_minimizing_function: bool
         """
@@ -70,12 +70,12 @@ class MyBenchmark(Benchmark):
         self.scores_10000 = []
         self.scores_100000 = []
 
-        self.optimal_quality_function_value = optimal_quality_function_value
+        self.optimal_objective_function_value = optimal_objective_function_value
         self.is_algorithm_minimizing_function = is_algorithm_minimizing_function
 
     def collect_data(self, evolution: 'Evolution'):
         """
-        This method checks if quality function was called 100, 1000, 10000 or 100000 times and extends lists of scores
+        This method checks if objective function was called 100, 1000, 10000 or 100000 times and extends lists of scores
         with scores for current population.
 
         :param evolution: Evolution object from which data is collected
@@ -83,19 +83,19 @@ class MyBenchmark(Benchmark):
         :return: None
         :rtype: None
         """
-        if evolution.quality_function_calls == 100:
+        if evolution.object_function_calls == 100:
             self.scores_100.extend(evolution.population_scores)
-        elif evolution.quality_function_calls == 1000:
+        elif evolution.object_function_calls == 1000:
             self.scores_1000.extend(evolution.population_scores)
-        elif evolution.quality_function_calls == 10000:
+        elif evolution.object_function_calls == 10000:
             self.scores_10000.extend(evolution.population_scores)
-        elif evolution.quality_function_calls == 100000:
+        elif evolution.object_function_calls == 100000:
             self.scores_100000.extend(evolution.population_scores)
 
     def get_results(self) -> dict:
         """
         This method calculates best, worst, mean and median scores as well as standard deviation of all scores after
-        100, 1000, 10000 and 100000 quality function calls and returns the data in a dictionary.
+        100, 1000, 10000 and 100000 objective function calls and returns the data in a dictionary.
 
         :return: Dictionary containing calculated values. Keys to dictionaries are '100', '1000', '10000' and '100000'.
         each value is also a dictionary with keys: 'median', 'mean', 'std', 'best', 'worst'
@@ -135,16 +135,16 @@ class MyBenchmark(Benchmark):
         :return: None
         :rtype: None
         """
-        if self.optimal_quality_function_value == 0:
+        if self.optimal_objective_function_value == 0:
             return
         else:
             for dataset in [self.scores_100, self.scores_1000, self.scores_10000, self.scores_100000]:
                 for i in range(len(dataset)):
-                    dataset[i] = abs(dataset[i] - self.optimal_quality_function_value)
+                    dataset[i] = abs(dataset[i] - self.optimal_objective_function_value)
 
     def create_and_save_boxplot(self, name_of_the_file: str):
         """
-        Creates and shows boxplot of scores after 100, 1000, 10000 and 100000 quality function calls and stores it in
+        Creates and shows boxplot of scores after 100, 1000, 10000 and 100000 objective function calls and stores it in
         file with given name.
 
         :param name_of_the_file: Name of the file in which boxplot should be stored
@@ -155,7 +155,7 @@ class MyBenchmark(Benchmark):
         array_of_vectors = [self.scores_100, self.scores_1000, self.scores_10000, self.scores_100000]
         plt.boxplot(array_of_vectors)
         plt.ylabel('Distance from optimum')
-        plt.xlabel('Quality function calls')
+        plt.xlabel('Objective function calls')
         plt.xticks([1, 2, 3, 4], ['100', '1000', '10000', '100000'])
         plt.savefig(name_of_the_file)
         plt.show()

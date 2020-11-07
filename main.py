@@ -9,7 +9,7 @@ from Evolution.benchmark import MyBenchmark
 from Evolution.evolution import Evolution
 
 
-def sphere_quality_function(parameters: List[float]):
+def sphere_objective_function(parameters: List[float]):
     return sum([x ** 2 for x in parameters])
 
 
@@ -28,11 +28,11 @@ if __name__ == '__main__':
     # Variables describing optimized function
     sphere_dimensionality = 10
     sphere_parameter_bounds = [(-100, 100)] * sphere_dimensionality
-    sphere_optimal_quality_function_value = 0
+    sphere_optimal_objective_function_value = 0
 
     # Objects used for collection and processing of data from evolution process
-    benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_quality_function_value)
-    benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_quality_function_value)
+    benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_objective_function_value)
+    benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_objective_function_value)
 
     results_dict = {'10k': {},
                     '100k': {}}
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     results_directory_name = 'results/'
 
     evolution_small_population = Evolution(small_population_size, sigma,
-                                           sphere_quality_function,
+                                           sphere_objective_function,
                                            sphere_dimensionality,
                                            sphere_parameter_bounds, 1,
                                            minimize=is_algorithm_minimizing_function,
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                                            )
 
     evolution_big_population = Evolution(big_population_size, sigma,
-                                         sphere_quality_function,
+                                         sphere_objective_function,
                                          sphere_dimensionality,
                                          sphere_parameter_bounds, 1,
                                          minimize=is_algorithm_minimizing_function,
@@ -65,32 +65,32 @@ if __name__ == '__main__':
         100000: '100k'
     }
 
-    for max_quality_fun_calls in [10000, 100000]:
+    for max_objective_fun_calls in [10000, 100000]:
 
         for i in range(number_of_experiment_repetitions):
-            evolution_small_population.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS,
-                                              max_quality_function_calls=max_quality_fun_calls,
+            evolution_small_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
+                                              max_objective_function_calls=max_objective_fun_calls,
                                               benchmark=benchmark_small_population)
 
         for i in range(number_of_experiment_repetitions):
-            evolution_big_population.evolve(Evolution.MAX_QUALITY_FUNCTION_CALLS,
-                                            max_quality_function_calls=max_quality_fun_calls,
+            evolution_big_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
+                                            max_objective_function_calls=max_objective_fun_calls,
                                             benchmark=benchmark_big_population)
 
-        print('Small population results - {} quality function calls'.format(shorthands[max_quality_fun_calls]))
+        print('Small population results - {} objective function calls'.format(shorthands[max_objective_fun_calls]))
         small_population_results = benchmark_small_population.get_results()
         pprint(small_population_results)
         benchmark_small_population.create_and_save_boxplot(
-            results_directory_name + 'small_population_' + shorthands[max_quality_fun_calls] + '_calls.png')
+            results_directory_name + 'small_population_' + shorthands[max_objective_fun_calls] + '_calls.png')
 
-        print('Big population results - {} quality function calls'.format(shorthands[max_quality_fun_calls]))
+        print('Big population results - {} objective function calls'.format(shorthands[max_objective_fun_calls]))
         big_population_results = benchmark_big_population.get_results()
         pprint(big_population_results)
         benchmark_big_population.create_and_save_boxplot(
-            results_directory_name + 'big_population_' + shorthands[max_quality_fun_calls] + '_calls.png')
+            results_directory_name + 'big_population_' + shorthands[max_objective_fun_calls] + '_calls.png')
 
-        results_dict[shorthands[max_quality_fun_calls]]['small population'] = small_population_results
-        results_dict[shorthands[max_quality_fun_calls]]['big population'] = big_population_results
+        results_dict[shorthands[max_objective_fun_calls]]['small population'] = small_population_results
+        results_dict[shorthands[max_objective_fun_calls]]['big population'] = big_population_results
 
     end_time = time()
 

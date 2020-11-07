@@ -20,7 +20,7 @@ class Evolution:
 
     # Evolution stop method
     MAX_ITERATIONS = 'iterations'
-    MAX_QUALITY_FUNCTION_CALLS = 'quality calls'
+    MAX_OBJECTIVE_FUNCTION_CALLS = 'objective calls'
 
     # Selection methods
     TOURNAMENT_SELECTION = 'Tournament selection'
@@ -32,7 +32,7 @@ class Evolution:
     GENERATION_SUCCESSION = 'Generation succession'
 
     def __init__(self, population_size: int, sigma: float,
-                 quality_function: Callable, dimensionality: int,
+                 objective_function: Callable, dimensionality: int,
                  parameter_bounds: List[Tuple[float, float]],
                  crossing_probability: float,
                  minimize: bool = True,
@@ -46,16 +46,17 @@ class Evolution:
         :type population_size: int
         :param sigma: Defines standard deviation of distribution used in mutation process
         :type sigma: float
-        :param quality_function: Function used to define quality of single candidate. This function should return float
-        :type quality_function: Callable
+        :param objective_function: Function used to define quality of single candidate. This function should
+        return float
+        :type objective_function: Callable
         :param dimensionality: Defines number of dimensions of each candidate
         :type dimensionality: int
         :param parameter_bounds: Defines low and high bounds of each of the parameters. Bounds should be floats
         :type parameter_bounds: List[Tuple[float, float]]
         :param crossing_probability: Probability of crossing single candidate with any other candidate
         :type crossing_probability: float
-        :param minimize: Parameter defining if algorithm should minimize of maximize value of quality function.
-                        If True is given then algorithm will minimize output of quality function.
+        :param minimize: Parameter defining if algorithm should minimize of maximize value of objective function.
+                        If True is given then algorithm will minimize output of objective function.
         :type minimize: bool
         :param type_of_selection: Parameter deciding what algorithm of selection is used in algorithm.
                                   Inside class there are constants defined in form <NAME OF SELECTION TYPE>_SELECTION,
@@ -75,7 +76,7 @@ class Evolution:
 
         self.population_size = population_size
         self.sigma = sigma
-        self.quality_function = quality_function
+        self.objective_function = objective_function
         self.num_of_parameters = dimensionality
         self.parameter_bounds = parameter_bounds
         self.crossing_probability = crossing_probability
@@ -85,7 +86,7 @@ class Evolution:
         self.crossing_strategy: CrossingStrategy = self.crossing_factory(type_of_crossing)
         self.succession_strategy: SuccessionStrategy = self.succession_factory(type_of_succession)
 
-        self.quality_function_calls = 0
+        self.object_function_calls = 0
 
         self.population = []
         self.population_scores = []
@@ -94,49 +95,49 @@ class Evolution:
         self.mean_scores = []
 
     def evolve(self, stop_parameter: str, *, benchmark: Benchmark,
-               max_iterations: int = None, max_quality_function_calls: int = None,
+               max_iterations: int = None, max_objective_function_calls: int = None,
                ):
         """
         Main method of this class, it performs evolution algorithm.
 
 
         :param stop_parameter: This parameter defines when does evolution process end. There are two possible values of
-        this parameter defined in static constants - MAX_ITERATIONS and MAX_QUALITY_FUNCTION_CALLS.
+        this parameter defined in static constants - MAX_ITERATIONS and MAX_OBJECTIVE_FUNCTION_CALLS.
         :type stop_parameter: str
         :param max_iterations: Defines maximum number of iterations in evolution algorithm. If stop_parameter is set to
         MAX_ITERATIONS this parameter must be passed.
         :type max_iterations: int
-        :param max_quality_function_calls: Defines maximum number of calls of quality function in evolution algorithm.
-        If stop_parameter is set to MAX_QUALITY_FUNCTION_CALLS this parameter must be passed.
-        :type max_quality_function_calls: int
+        :param max_objective_function_calls: Defines maximum number of calls of objective function in
+        evolution algorithm. If stop_parameter is set to MAX_OBJECTIVE_FUNCTION_CALLS this parameter must be passed.
+        :type max_objective_function_calls: int
         :param benchmark: Benchmark object class, which collect_data method will be called every iteration of evolution
         algorithm
         :type benchmark: Benchmark
         """
-        if stop_parameter not in [self.MAX_ITERATIONS, self.MAX_QUALITY_FUNCTION_CALLS]:
+        if stop_parameter not in [self.MAX_ITERATIONS, self.MAX_OBJECTIVE_FUNCTION_CALLS]:
             raise ValueError('Stop parameter not found')
 
         if stop_parameter == self.MAX_ITERATIONS:
             if max_iterations is None or not isinstance(max_iterations, int) or max_iterations < 0:
                 raise ValueError('Max_iterations must be an integer bigger than 0')
 
-        elif stop_parameter == self.MAX_QUALITY_FUNCTION_CALLS:
-            if max_quality_function_calls is None or not isinstance(max_quality_function_calls, int) \
-                    or max_quality_function_calls < 0:
-                raise ValueError('Max_quality_function_calls must be an integer bigger than 0')
+        elif stop_parameter == self.MAX_OBJECTIVE_FUNCTION_CALLS:
+            if max_objective_function_calls is None or not isinstance(max_objective_function_calls, int) \
+                    or max_objective_function_calls < 0:
+                raise ValueError('Max_objective_function_calls must be an integer bigger than 0')
 
         assert isinstance(benchmark, Benchmark)
 
         self.best_scores = []
         self.mean_scores = []
-        self.quality_function_calls = 0
+        self.object_function_calls = 0
 
         t = 0
 
         self.population = self.generate_first_generation()
         self.population_scores = self.score(self.population)
 
-        while not self._is_done(stop_parameter, t, max_iterations, max_quality_function_calls):
+        while not self._is_done(stop_parameter, t, max_iterations, max_objective_function_calls):
             benchmark.collect_data(self)
 
             temporal_population = self.select_strategy.select(self.population, self.population_scores)
@@ -160,19 +161,19 @@ class Evolution:
         benchmark.collect_data(self)
 
     def _is_done(self, stop_parameter: str, iterations: int, max_iterations: int,
-                 max_quality_function_calls: int) -> bool:
+                 max_objective_function_calls: int) -> bool:
         """
         Helper function for deciding if evolution process should terminate.
 
         :param stop_parameter: This parameter defines when does evolution process end. There are two possible values of
-        this parameter defined in static constants - MAX_ITERATIONS and MAX_QUALITY_FUNCTION_CALLS.
+        this parameter defined in static constants - MAX_ITERATIONS and MAX_OBJECTIVE_FUNCTION_CALLS.
         :type stop_parameter: str
         :param iterations: Current number of iterations of evolution process
         :type iterations:  int
         :param max_iterations: Maximum number of iterations of evolution process
         :type max_iterations: int
-        :param max_quality_function_calls: Maximum number of quality function calls
-        :type max_quality_function_calls: int
+        :param max_objective_function_calls: Maximum number of objective function calls
+        :type max_objective_function_calls: int
         :return: Information if evolution process should be terminated
         :rtype: bool
         """
@@ -182,7 +183,7 @@ class Evolution:
             if iterations >= max_iterations:
                 is_done = True
         else:
-            if self.quality_function_calls >= max_quality_function_calls:
+            if self.object_function_calls >= max_objective_function_calls:
                 is_done = True
 
         return is_done
@@ -271,16 +272,16 @@ class Evolution:
 
     def score(self, population: List[List[float]]) -> List[float]:
         """
-        Creates list of scores for given population by applying quality function for each candidate and updates number
-        of quality function calls.
+        Creates list of scores for given population by applying objective function for each candidate and updates number
+        of objective function calls.
 
         :param population: Population on which scoring process should be performed
         :type population: List[List[float]]
         :return: Scores for each corresponding candidate in population
         :rtype: List[float]
         """
-        scores = [self.quality_function(candidate) for candidate in population]
-        self.quality_function_calls += self.population_size
+        scores = [self.objective_function(candidate) for candidate in population]
+        self.object_function_calls += self.population_size
 
         return scores
 
@@ -336,7 +337,7 @@ class Evolution:
         if len(self.population) == 0:
             raise AssertionError('Population is empty')
 
-        sorted_population = sorted(self.population, key=lambda a: self.quality_function(a), reverse=not self.minimize)
+        sorted_population = sorted(self.population, key=lambda a: self.objective_function(a), reverse=not self.minimize)
 
         return sorted_population[:n]
 
@@ -350,7 +351,7 @@ class Evolution:
         n_best_candidates = self.get_best_candidates(n)
 
         for candidate in n_best_candidates:
-            print('Score: {:.2f}, candidate {}'.format(self.quality_function(candidate), candidate))
+            print('Score: {:.2f}, candidate {}'.format(self.objective_function(candidate), candidate))
 
     def plot_evolution(self):
         """
@@ -360,7 +361,7 @@ class Evolution:
         :rtype: None
         """
         plt.xlabel('Iterations of evolution algorithm')
-        plt.ylabel('Best and Mean values of quality function')
+        plt.ylabel('Best and Mean values of objective function')
         plt.plot(self.best_scores, label='Best score')
         plt.plot(self.mean_scores, label='Mean score')
         plt.legend()
