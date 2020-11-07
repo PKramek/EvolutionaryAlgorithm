@@ -19,6 +19,7 @@ if __name__ == '__main__':
     start_time = time()
 
     number_of_experiment_repetitions = 25
+    max_objective_fun_calls = 100000
 
     is_algorithm_minimizing_function = True
     sigma = 0.2
@@ -38,6 +39,7 @@ if __name__ == '__main__':
     results_filename = 'results.json'
     results_directory_name = 'results/'
 
+    # Objects representing evolution processes with different population sizes
     evolution_small_population = Evolution(small_population_size, sigma,
                                            sphere_objective_function,
                                            sphere_dimensionality,
@@ -57,8 +59,6 @@ if __name__ == '__main__':
                                          type_of_crossing=Evolution.NO_CROSSING,
                                          type_of_succession=Evolution.GENERATION_SUCCESSION,
                                          )
-
-    max_objective_fun_calls = 100000
 
     for i in range(number_of_experiment_repetitions):
         evolution_small_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
