@@ -25,7 +25,7 @@ if __name__ == '__main__':
     small_population_size = 10
     big_population_size = 100
 
-    # Variables describing optimized function
+    # Variables describing objective function
     sphere_dimensionality = 10
     sphere_parameter_bounds = [(-100, 100)] * sphere_dimensionality
     sphere_optimal_objective_function_value = 0
