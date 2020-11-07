@@ -34,8 +34,7 @@ if __name__ == '__main__':
     benchmark_small_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_objective_function_value)
     benchmark_big_population = MyBenchmark(is_algorithm_minimizing_function, sphere_optimal_objective_function_value)
 
-    results_dict = {'10k': {},
-                    '100k': {}}
+    results_dict = {}
     results_filename = 'results.json'
     results_directory_name = 'results/'
 
@@ -59,38 +58,32 @@ if __name__ == '__main__':
                                          type_of_succession=Evolution.GENERATION_SUCCESSION,
                                          )
 
-    # Dictionary used to shorten and improve readability of output files and displayed results
-    shorthands = {
-        10000: '10k',
-        100000: '100k'
-    }
+    max_objective_fun_calls = 100000
 
-    for max_objective_fun_calls in [10000, 100000]:
+    for i in range(number_of_experiment_repetitions):
+        evolution_small_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
+                                          max_objective_function_calls=max_objective_fun_calls,
+                                          benchmark=benchmark_small_population)
 
-        for i in range(number_of_experiment_repetitions):
-            evolution_small_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
-                                              max_objective_function_calls=max_objective_fun_calls,
-                                              benchmark=benchmark_small_population)
+    for i in range(number_of_experiment_repetitions):
+        evolution_big_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
+                                        max_objective_function_calls=max_objective_fun_calls,
+                                        benchmark=benchmark_big_population)
 
-        for i in range(number_of_experiment_repetitions):
-            evolution_big_population.evolve(Evolution.MAX_OBJECTIVE_FUNCTION_CALLS,
-                                            max_objective_function_calls=max_objective_fun_calls,
-                                            benchmark=benchmark_big_population)
+    print('Small population results - 100k objective function calls')
+    small_population_results = benchmark_small_population.get_results()
+    pprint(small_population_results)
+    benchmark_small_population.create_and_save_boxplot(
+        results_directory_name + 'small_population_100k_calls.png')
 
-        print('Small population results - {} objective function calls'.format(shorthands[max_objective_fun_calls]))
-        small_population_results = benchmark_small_population.get_results()
-        pprint(small_population_results)
-        benchmark_small_population.create_and_save_boxplot(
-            results_directory_name + 'small_population_' + shorthands[max_objective_fun_calls] + '_calls.png')
+    print('Big population results - 100k objective function calls')
+    big_population_results = benchmark_big_population.get_results()
+    pprint(big_population_results)
+    benchmark_big_population.create_and_save_boxplot(
+        results_directory_name + 'big_population_100k_calls.png')
 
-        print('Big population results - {} objective function calls'.format(shorthands[max_objective_fun_calls]))
-        big_population_results = benchmark_big_population.get_results()
-        pprint(big_population_results)
-        benchmark_big_population.create_and_save_boxplot(
-            results_directory_name + 'big_population_' + shorthands[max_objective_fun_calls] + '_calls.png')
-
-        results_dict[shorthands[max_objective_fun_calls]]['small population'] = small_population_results
-        results_dict[shorthands[max_objective_fun_calls]]['big population'] = big_population_results
+    results_dict['small population'] = small_population_results
+    results_dict['big population'] = big_population_results
 
     end_time = time()
 
